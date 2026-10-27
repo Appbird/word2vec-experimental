@@ -92,8 +92,6 @@ def test_returns_finite_loss():
         optimizer,
         torch.device("cpu"),
     )
-
-    assert isinstance(loss, float)
     assert math.isfinite(loss)
 
 

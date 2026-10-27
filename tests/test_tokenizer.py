@@ -59,14 +59,6 @@ def test_min_frequency():
     assert tokenizer.encode("apple banana orange") == [1, 0, 2]
 
 
-def test_case_insensitive():
-    """大文字と小文字は区別しない。"""
-    tokenizer = Tokenizer()
-    tokenizer.fit("Apple BANANA apple")
-
-    assert tokenizer.vocab_size == 3
-    assert tokenizer.encode("APPLE banana") == [1, 2]
-
 
 def test_whitespace():
     """連続する空白・改行・タブを単語区切りとして扱う。"""

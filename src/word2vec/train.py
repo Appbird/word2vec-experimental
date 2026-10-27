@@ -1,10 +1,9 @@
 import torch
 from torch.nn import Module
-from torch.utils.data import DataLoader
 from torch.optim import Optimizer
 from tqdm import tqdm
 
-def train_epoch(model:Module, dataloader:DataLoader, optimizer:Optimizer, device):
+def train_epoch(model:Module, dataloader, optimizer:Optimizer, device):
     model.train()
 
     criterion = torch.nn.CrossEntropyLoss()

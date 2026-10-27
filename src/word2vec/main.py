@@ -2,11 +2,10 @@ import json
 from pathlib import Path
 
 import torch
-from torch.utils.data import DataLoader
 
 from word2vec.config import Config
 from word2vec.tokenizer import Tokenizer
-from word2vec.dataset import CausalCBOWDataset
+from word2vec.dataset import CausalCBOWBatches
 from word2vec.model import CausalCBOW
 from word2vec.train import train_epoch
 from word2vec.evaluate import evaluate
@@ -32,12 +31,10 @@ def train_loop():
     train_ids = tokenizer.encode(train_text)
     valid_ids = tokenizer.encode(valid_text)
 
-    train_dataset = CausalCBOWDataset(train_ids, config.context_size)
-    valid_dataset = CausalCBOWDataset(valid_ids, config.context_size)
-    if len(train_dataset) == 0 or len(valid_dataset) == 0:
-        raise ValueError("Corpus is too small.")
-    train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
-    valid_loader = DataLoader(valid_dataset, batch_size=config.batch_size)
+    train_loader = CausalCBOWBatches(train_ids, config.context_size, batch_size=config.batch_size, device=device, seed=config.seed, shuffle=True)
+    valid_loader = CausalCBOWBatches(valid_ids, config.context_size, batch_size=config.batch_size, device=device, seed=config.seed)
+    if len(train_loader) == 0 or len(valid_loader) == 0:
+            raise ValueError("Corpus is too small.")
 
     model = CausalCBOW(vocab_size=tokenizer.vocab_size, embedding_dim=config.embedding_dim).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)

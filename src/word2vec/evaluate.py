@@ -3,11 +3,10 @@ import torch
 import torch.nn.functional as F
 
 from torch.nn import Module
-from torch.utils.data import DataLoader
 from torch.optim import Optimizer
 
 @torch.no_grad()
-def evaluate(model:Module, dataloader:DataLoader, device):
+def evaluate(model:Module, dataloader, device):
     model.eval()
 
     total_loss = 0.0

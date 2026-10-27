@@ -7,12 +7,12 @@ class Tokenizer:
         self.id_to_word = ["<unk>"]
     def fit(self, text:str):
         counts = Counter(text.split())
-        for word, freq in counts.items():
+        for word, freq in counts.most_common():
             if word == "<unk>":
                 continue
-            if freq >= self.min_freq:
-                self.word_to_id[word] = len(self.id_to_word)
-                self.id_to_word.append(word)
+            if freq < self.min_freq: break
+            self.word_to_id[word] = len(self.id_to_word)
+            self.id_to_word.append(word)
 
     def encode(self, text:str) -> list[int]:
         return [

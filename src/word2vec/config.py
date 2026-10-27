@@ -11,3 +11,6 @@ class Config:
 
     min_freq:int = 5
     seed:int = 42
+
+    cutoffs: tuple[int, ...] = (2000, 10000)
+    div_value:float = 4.0

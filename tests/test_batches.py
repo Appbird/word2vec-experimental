@@ -1,6 +1,5 @@
 import pytest
 import torch
-import torch.nn.functional as F
 
 from word2vec.dataset import CausalCBOWBatches, CausalCBOWDataset
 from word2vec.model import CausalCBOW
@@ -147,15 +146,14 @@ def test_iterable_multiple_times_without_shuffle():
 
 
 def test_usable_for_model_and_loss():
-    """出力をそのままモデルとCrossEntropyに渡せる。"""
-    model = CausalCBOW(vocab_size=10, embedding_dim=8)
+    """出力をそのままモデルに渡してlossを計算できる。"""
+    model = CausalCBOW(vocab_size=10, embedding_dim=8, cutoffs=[5])
     batches = CausalCBOWBatches(
         [1, 2, 3, 4, 5, 6, 7, 8, 9], context_size=3, batch_size=4
     )
 
     for x, y in batches:
-        logits = model(x)
-        loss = F.cross_entropy(logits, y)
+        loss = model(x, y).loss
         assert torch.isfinite(loss)
 
 

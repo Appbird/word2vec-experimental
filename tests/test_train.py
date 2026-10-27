@@ -30,7 +30,7 @@ def test_parameters_updated():
     """学習によってパラメータが更新される。"""
     torch.manual_seed(42)
 
-    model = CausalCBOW(vocab_size=10, embedding_dim=8)
+    model = CausalCBOW(vocab_size=10, embedding_dim=8, cutoffs=[5])
     loader = make_dataloader()
 
     optimizer = torch.optim.SGD(
@@ -57,7 +57,7 @@ def test_loss_decreases():
     """反復学習によってLossが減少する。"""
     torch.manual_seed(42)
 
-    model = CausalCBOW(vocab_size=10, embedding_dim=8)
+    model = CausalCBOW(vocab_size=10, embedding_dim=8, cutoffs=[5])
     loader = make_dataloader()
 
     optimizer = torch.optim.Adam(
@@ -81,7 +81,7 @@ def test_loss_decreases():
 
 def test_returns_finite_loss():
     """Lossが有限の数値として返される。"""
-    model = CausalCBOW(vocab_size=10, embedding_dim=8)
+    model = CausalCBOW(vocab_size=10, embedding_dim=8, cutoffs=[5])
     loader = make_dataloader()
 
     optimizer = torch.optim.Adam(model.parameters())
@@ -97,7 +97,7 @@ def test_returns_finite_loss():
 
 def test_training_mode_enabled():
     """学習時にはmodel.train()が呼ばれる。"""
-    model = CausalCBOW(vocab_size=10, embedding_dim=8)
+    model = CausalCBOW(vocab_size=10, embedding_dim=8, cutoffs=[5])
     model.eval()
 
     optimizer = torch.optim.Adam(model.parameters())

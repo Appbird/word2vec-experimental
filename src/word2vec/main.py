@@ -27,6 +27,8 @@ def train_loop():
     tokenizer.fit(train_text)
 
     print(f"Vocabulary: {tokenizer.vocab_size}")
+    if tokenizer.vocab_size < config.cutoffs[-1]:
+         raise ValueError("Vocabulary is too small.")
 
     train_ids = tokenizer.encode(train_text)
     valid_ids = tokenizer.encode(valid_text)
@@ -36,7 +38,12 @@ def train_loop():
     if len(train_loader) == 0 or len(valid_loader) == 0:
             raise ValueError("Corpus is too small.")
 
-    model = CausalCBOW(vocab_size=tokenizer.vocab_size, embedding_dim=config.embedding_dim).to(device)
+    model = CausalCBOW(
+         vocab_size=tokenizer.vocab_size,
+         embedding_dim=config.embedding_dim,
+         cutoffs=list(config.cutoffs),
+         div_value=config.div_value
+    ).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
     for epoch in range(config.epochs):
         train_loss = train_epoch(model, train_loader, optimizer, device)

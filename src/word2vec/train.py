@@ -16,8 +16,8 @@ def train_epoch(model:Module, dataloader, optimizer:Optimizer, device):
         # yは非負整数？
         optimizer.zero_grad()
 
-        logits = model(x)
-        loss = criterion(logits, y)
+        out = model(x, y)
+        loss = out.loss
         # 非負整数yをonehotベクトルと見做した上でのCross Entropy Lossを見ている。
 
         loss.backward()

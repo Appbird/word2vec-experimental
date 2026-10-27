@@ -9,6 +9,10 @@ from word2vec.model import CausalCBOW
 from word2vec.evaluate import evaluate
 
 
+VOCAB_SIZE = 10
+CUTOFFS = [5]
+
+
 def make_dataloader():
     x = torch.tensor([
         [1, 2, 3],
@@ -17,6 +21,7 @@ def make_dataloader():
         [4, 5, 6],
     ])
 
+    # 4はhead、5〜7はtailに入る
     y = torch.tensor([4, 5, 6, 7])
 
     return DataLoader(
@@ -25,24 +30,31 @@ def make_dataloader():
     )
 
 
-def make_uniform_model(vocab_size=10):
-    """すべての単語に等確率を与えるモデル。"""
-    model = CausalCBOW(
-        vocab_size=vocab_size,
+def make_model():
+    return CausalCBOW(
+        vocab_size=VOCAB_SIZE,
         embedding_dim=8,
+        cutoffs=CUTOFFS,
     )
 
+
+def make_zero_output_model():
+    """出力層の重みをすべて0にしたモデル。
+
+    headの (5語 + 1クラスタ) と、tail内の5語がそれぞれ等確率になる。
+    """
+    model = make_model()
+
     with torch.no_grad():
-        model.output.weight.zero_()
-        model.output.bias.zero_()
+        for param in model.output.parameters():
+            param.zero_()
 
     return model
 
 
-def test_uniform_perplexity():
-    """一様分布のPerplexityは語彙数に等しい。"""
-    vocab_size = 10
-    model = make_uniform_model(vocab_size)
+def test_zero_output_cross_entropy():
+    """出力層が0のときのCross Entropyが理論値と一致する。"""
+    model = make_zero_output_model()
 
     metrics = evaluate(
         model,
@@ -50,30 +62,34 @@ def test_uniform_perplexity():
         torch.device("cpu"),
     )
 
-    assert metrics["perplexity"] == pytest.approx(
-        vocab_size, rel=1e-5
-    )
+    # head語: P = 1/6、tail語: P = 1/6 * 1/5 = 1/30
+    expected = (math.log(6) + 3 * math.log(30)) / 4
+
+    assert metrics["loss"] == pytest.approx(expected, rel=1e-5)
 
 
-def test_uniform_cross_entropy():
-    """一様分布のCross Entropyはlog(V)。"""
-    vocab_size = 10
-    model = make_uniform_model(vocab_size)
+def test_loss_matches_log_prob():
+    """lossは正解単語の負の対数確率の平均と一致する。"""
+    torch.manual_seed(0)
+    model = make_model()
+    model.eval()
 
-    metrics = evaluate(
-        model,
-        make_dataloader(),
-        torch.device("cpu"),
-    )
+    loader = make_dataloader()
+    metrics = evaluate(model, loader, torch.device("cpu"))
 
-    assert metrics["loss"] == pytest.approx(
-        math.log(vocab_size), rel=1e-5
-    )
+    with torch.no_grad():
+        nll = [
+            -model.log_prob(x).gather(1, y[:, None]).squeeze(1)
+            for x, y in loader
+        ]
+    expected = torch.cat(nll).mean().item()
+
+    assert metrics["loss"] == pytest.approx(expected, rel=1e-5)
 
 
 def test_perplexity_relation():
     """PPL = exp(loss)が成り立つ。"""
-    model = CausalCBOW(vocab_size=10, embedding_dim=8)
+    model = make_model()
 
     metrics = evaluate(
         model,
@@ -88,7 +104,7 @@ def test_perplexity_relation():
 
 def test_evaluation_mode():
     """評価時にはmodel.eval()が呼ばれる。"""
-    model = CausalCBOW(vocab_size=10, embedding_dim=8)
+    model = make_model()
     model.train()
 
     evaluate(
@@ -102,7 +118,7 @@ def test_evaluation_mode():
 
 def test_parameters_unchanged():
     """評価によってモデルの重みが更新されない。"""
-    model = CausalCBOW(vocab_size=10, embedding_dim=8)
+    model = make_model()
 
     before = {
         name: param.detach().clone()
@@ -126,7 +142,7 @@ def test_parameters_unchanged():
 
 def test_evaluate_returns_expected_keys():
     """評価結果にLossとPerplexityが含まれる。"""
-    model = CausalCBOW(vocab_size=10, embedding_dim=8)
+    model = make_model()
 
     metrics = evaluate(
         model,

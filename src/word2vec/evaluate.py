@@ -15,14 +15,12 @@ def evaluate(model:Module, dataloader, device):
     for x, y in dataloader:
         x = x.to(device)
         y = y.to(device)
-        logits = model(x)
+        out = model(x, y)
 
-        loss = F.cross_entropy(logits, y, reduction="sum")
-
-        total_loss += loss.item()
+        total_loss += -out.output.sum() # 正解のlog確率の合計
         total_samples += y.numel()
 
-    avg_loss = total_loss / total_samples
+    avg_loss = (total_loss / total_samples).item()
     perplexity = math.exp(avg_loss)
 
     return {

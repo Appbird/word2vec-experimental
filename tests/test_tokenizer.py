@@ -56,8 +56,25 @@ def test_min_frequency():
     tokenizer.fit("apple apple banana orange orange orange")
 
     assert tokenizer.vocab_size == 3
-    assert tokenizer.encode("apple banana orange") == [1, 0, 2]
+    # orange(3回) → apple(2回) の順にIDが振られる
+    assert tokenizer.encode("apple banana orange") == [2, 0, 1]
 
+
+def test_ids_sorted_by_frequency():
+    """頻度の高い単語ほど小さいIDが振られる。"""
+    tokenizer = Tokenizer()
+    tokenizer.fit("c b c a b c d c b a")
+
+    # c:4, b:3, a:2, d:1
+    assert tokenizer.id_to_word == ["<unk>", "c", "b", "a", "d"]
+
+
+def test_frequency_tie_keeps_appearance_order():
+    """同じ頻度の単語は出現順にIDが振られる。"""
+    tokenizer = Tokenizer()
+    tokenizer.fit("banana apple cherry")
+
+    assert tokenizer.id_to_word == ["<unk>", "banana", "apple", "cherry"]
 
 
 def test_whitespace():
